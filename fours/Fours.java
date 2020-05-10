@@ -17,9 +17,8 @@ class Fours
 			target = Double.parseDouble(args[0]);
 			maxDepth = Integer.parseInt(args[1]);
 			queue.add(new StateNode("4", true, 0));
-			while (queue.peek() != null)
+			for (StateNode currNode = queue.remove(); currNode != null; currNode = queue.remove())
 			{
-				StateNode currNode = queue.remove();
 				if (currNode.depth > maxDepth) break;
 				currNode.run();
 			}
