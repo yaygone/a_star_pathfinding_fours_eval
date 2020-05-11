@@ -8,39 +8,37 @@ class AStar
 	char[][] map;
 
 	public static void main(String[] args)
-	{ try { new AStar().run("map1.txt"); } catch (Exception e) { System.err.println("Exception: " + e.getMessage()); } }
+	{ try { if (args.length == 1) new AStar().run(args[0]); } catch (Exception e) { e.printStackTrace(); } }
 
 	public void run(String fileName) throws FileNotFoundException, IOException
 	{
+		// Process file into a 2-dimensional array. Goal recorded, and start point added as first frontier.
 		BufferedReader reader = new BufferedReader(new FileReader(fileName));
 		List<String> input = new ArrayList<String>();
-		for (String s = reader.readLine(); s != null; s = reader.readLine())
-			input.add(s);
+		for (String s = reader.readLine(); s != null; s = reader.readLine()) input.add(s);
 		reader.close();
-
 		map = new char[input.size()][];
 		for (int i = 0; i < map.length; i++)
 		{
 			map[i] = input.get(i).toCharArray();
 			for (int j = 0; j < map[i].length; j++)
 			{
-				System.out.println("Passing through " + j + " " + i);
 				if (map[i][j] == 'G') goal = new Coord(j, i);
-				if (map[i][j] == 'S') frontier.add(new StateNode(null, new Coord(j, i)));
+				if (map[i][j] == 'S') frontier.add(new StateNode(null, 0, new Coord(j, i)));
 			}
 		}
 
+		// Find the shortest path to the goal. If the immediate top candidate in frontier does not reach the goal, 
+		// then it adds subsequent states to the frontier to be processed.
 		StateNode result;
 		for (result = frontier.poll(); result != null; result = frontier.poll())
 			if (result.reachedGoal()) break;
 		
-		result.changeMap();
+		// Draw the path on the map, and output the result.
+		result.changeMap(true);
 		for (char[] row : map)
-		{
-			System.out.print("\n");
-			for (char c : row)
-				System.out.print(c);
-		}
+			System.out.println(new String(row));
+		System.out.println("Shortest path took " + result.cost + " steps");
 	}
 
 	/**
@@ -50,47 +48,44 @@ class AStar
 	{
 		StateNode prev;
 		Coord val;
+		int cost;
 
-		public StateNode(StateNode prev, Coord val)
+		public StateNode(StateNode prev, int cost, Coord val)
 		{
 			this.prev = prev;
+			this.cost = cost;
 			this.val = val;
 		}
 
 		public boolean reachedGoal()
 		{
-			if (prev != null) System.out.println("Searching through chain (" + val.x + "," + val.y + ") " + prev.output());
+			// Goal reached, return true
 			if (val.dist(goal) == 0) return true;
-			if (!this.isLooping() && map[val.y][val.x] != ' ') for (Coord c : this.val.getAdjacent()) frontier.add(new StateNode(this, c));
+			// Only add further states if this isn't looping. Otherwise, let it die
+			if (!this.isLooping())
+				for (Coord c : this.val.getAdjacent())
+					// Allowable paths are only empty or the goal
+					if (map[c.y][c.x] == ' ' || map[c.y][c.x] == 'G')
+						frontier.add(new StateNode(this, this.cost + 1, c));
 			return false;
 		}
 
-		private String output()
+		public void changeMap(boolean isGoal)
 		{
-			String outputString = "(" + val.x + "," + val.y + ") ";
-			if (prev != null) outputString += prev.output();
-			return outputString;
-		}
-
-		public void changeMap()
-		{
-			map[val.y][val.x] = '.';
-			if (prev != null) prev.changeMap();
+			map[val.y][val.x] = isGoal ? 'G' : '.';
+			if (prev != null) prev.changeMap(false);
+			else map[val.y][val.x] = 'S';
 		}
 
 		private boolean isLooping()
 		{
-			if (prev == null) return false;
-			for (StateNode temp = prev; temp != null; temp = prev.prev)
+			for (StateNode temp = prev; temp != null; temp = temp.prev)
 				if (this.val.dist(temp.val) == 0) return true;
-			return prev.isLooping();
+			return false;
 		}
 
 		private int fval()
-		{ return cval() + goal.dist(val); }
-
-		private int cval()
-		{ return prev == null ? 0 : 1 + prev.cval(); }
+		{ return cost + goal.dist(val); }
 	}
 
 	class Coord
@@ -104,7 +99,7 @@ class AStar
 		}
 
 		public Coord[] getAdjacent()
-		{ return new Coord[] {new Coord(x - 1, y), new Coord(x, y - 1), new Coord(x + 1, y), new Coord(x, y + 1)}; }
+		{ return new Coord[] { new Coord(x - 1, y), new Coord(x, y - 1), new Coord(x + 1, y), new Coord(x, y + 1) }; }
 
 		public int dist(Coord other)
 		{ return Math.abs(this.x - other.x) + Math.abs(this.y - other.y); }
