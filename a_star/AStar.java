@@ -4,27 +4,31 @@ import java.util.*;
 class AStar
 {
 	PriorityQueue<StateNode> frontier = new PriorityQueue<StateNode>(100, (StateNode s1, StateNode s2) -> (s1.fval() - s2.fval()));
-	Coord goal;
+	StateNode goal;
 	char[][] map;
+	StateNode[][] bestPath;
 
 	public static void main(String[] args)
 	{ try { if (args.length == 1) new AStar().run(args[0]); } catch (Exception e) { e.printStackTrace(); } }
 
 	public void run(String fileName) throws FileNotFoundException, IOException
 	{
+		final long startTime = System.currentTimeMillis();
 		// Process file into a 2-dimensional array. Goal recorded, and start point added as first frontier.
 		BufferedReader reader = new BufferedReader(new FileReader(fileName));
 		List<String> input = new ArrayList<String>();
 		for (String s = reader.readLine(); s != null; s = reader.readLine()) input.add(s);
 		reader.close();
 		map = new char[input.size()][];
+		bestPath = new StateNode[input.size()][];
 		for (int i = 0; i < map.length; i++)
 		{
 			map[i] = input.get(i).toCharArray();
+			bestPath[i] = new StateNode[input.get(i).length()];
 			for (int j = 0; j < map[i].length; j++)
 			{
-				if (map[i][j] == 'G') goal = new Coord(j, i);
-				if (map[i][j] == 'S') frontier.add(new StateNode(null, 0, new Coord(j, i)));
+				if (map[i][j] == 'G') goal = new StateNode(null, 0, j, i);
+				if (map[i][j] == 'S') frontier.add(new StateNode(null, 0, j, i));
 			}
 		}
 
@@ -35,10 +39,14 @@ class AStar
 			if (result.reachedGoal()) break;
 		
 		// Draw the path on the map, and output the result.
-		result.changeMap(true);
+		result.prev.showOnMap();
 		for (char[] row : map)
 			System.out.println(new String(row));
 		System.out.println("Shortest path took " + result.cost + " steps");
+
+		final long endTime = System.currentTimeMillis();
+
+		System.out.println("Program took " + (endTime - startTime) + " milliseconds to run.");
 	}
 
 	/**
@@ -47,61 +55,53 @@ class AStar
 	class StateNode
 	{
 		StateNode prev;
-		Coord val;
 		int cost;
+		int x, y;
 
-		public StateNode(StateNode prev, int cost, Coord val)
+		public StateNode(StateNode prev, int cost, int x, int y)
 		{
 			this.prev = prev;
 			this.cost = cost;
-			this.val = val;
+			this.x = x;
+			this.y = y;
 		}
 
 		public boolean reachedGoal()
 		{
 			// Goal reached, return true
-			if (val.dist(goal) == 0) return true;
+			if (distanceTo(goal) == 0) return true;
 			// Only add further states if this isn't looping. Otherwise, let it die
 			if (!this.isLooping())
-				for (Coord c : this.val.getAdjacent())
-					// Allowable paths are only empty or the goal
-					if (map[c.y][c.x] == ' ' || map[c.y][c.x] == 'G')
-						frontier.add(new StateNode(this, this.cost + 1, c));
+				for (StateNode state : getAdjacent())
+					// Allowable paths are only empty or the goal. Only enqueue if the most efficient way to that point.
+					if ((map[state.y][state.x] == ' ' || map[state.y][state.x] == 'G') && (bestPath[state.y][state.x] == null || bestPath[state.y][state.x].cost > state.cost))
+					{
+						frontier.add(state);
+						bestPath[state.y][state.x] = state;
+					}
 			return false;
 		}
 
-		public void changeMap(boolean isGoal)
+		public void showOnMap()
 		{
-			map[val.y][val.x] = isGoal ? 'G' : '.';
-			if (prev != null) prev.changeMap(false);
-			else map[val.y][val.x] = 'S';
+			map[y][x] = (prev == null) ? 'S' : '.';
+			if (prev != null) prev.showOnMap();
 		}
+
+		public StateNode[] getAdjacent()
+		{ return new StateNode[] { new StateNode(this, this.cost + 1, x - 1, y), new StateNode(this, this.cost + 1, x, y - 1), new StateNode(this, this.cost + 1, x + 1, y), new StateNode(this, this.cost + 1, x, y + 1) }; }
 
 		private boolean isLooping()
 		{
 			for (StateNode temp = prev; temp != null; temp = temp.prev)
-				if (this.val.dist(temp.val) == 0) return true;
+				if (this.distanceTo(temp) == 0) return true;
 			return false;
 		}
 
 		private int fval()
-		{ return cost + goal.dist(val); }
-	}
+		{ return cost + distanceTo(goal); }
 
-	class Coord
-	{
-		int x, y;
-
-		public Coord(int x, int y)
-		{
-			this.x = x;
-			this.y = y;
-		}
-
-		public Coord[] getAdjacent()
-		{ return new Coord[] { new Coord(x - 1, y), new Coord(x, y - 1), new Coord(x + 1, y), new Coord(x, y + 1) }; }
-
-		public int dist(Coord other)
+		public int distanceTo(StateNode other)
 		{ return Math.abs(this.x - other.x) + Math.abs(this.y - other.y); }
 	}
 }
