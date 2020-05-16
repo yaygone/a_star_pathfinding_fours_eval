@@ -1,34 +1,94 @@
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.layout.*;
+import javafx.scene.canvas.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
+
 import java.io.*;
 import java.util.*;
 
-class AStar
+public class AStar extends Application
 {
 	PriorityQueue<StateNode> frontier = new PriorityQueue<StateNode>(100, (StateNode s1, StateNode s2) -> (s1.fval() - s2.fval()));
 	StateNode goal;
 	char[][] map;
 	StateNode[][] bestPath;
 	boolean goDiag;
+	static String[] input;
+	int cellSize = 20;
+	double finalPathLength;
 
 	public static void main(String[] args)
 	{
-		try 
-			{ if (args.length == 1 || args.length == 2) new AStar().run(args); }
-		catch (Exception e)
-		{
-			System.err.println("Usage: java AStar <map file name> <optional: diagonal flag>");
-			e.printStackTrace();
-		}
+		input = args;
+		launch();
 	}
 
-	public void run(String[] args) throws FileNotFoundException, IOException
+	@Override
+	public void start(Stage stage)
+	{
+		try { if (input.length == 1 || input.length == 2) process(); }
+		catch (Exception e) { e.printStackTrace(); }
+		int xCount = map[0].length;
+		int yCount = map.length;
+		System.out.println();
+		GridPane gridpane = new GridPane();
+		for (int y = 0; y < yCount; y++)
+			for (int x = 0; x < xCount; x++)
+			{
+				Rectangle rect = new Rectangle(cellSize, cellSize);
+				switch (map[y][x])
+				{
+					case 'X':
+						rect.setFill(Color.MAROON);
+						break;
+					case ' ':
+						rect.setFill(Color.LIGHTSKYBLUE);
+						break;
+					case 'S':
+						rect.setFill(Color.LIMEGREEN);
+						break;
+					case '.':
+						rect.setFill(Color.BLACK);
+						break;
+					case 'G':
+						rect.setFill(Color.FUCHSIA);
+						break;
+					default:
+						rect.setFill(Color.DIMGRAY);
+						break;
+				}
+				gridpane.add(rect, x, y);
+				if (map[y][x] == '.')
+				{
+					GridPane inner = new GridPane();
+						for (int i = 0; i < 5; i++)
+							for (int j = 0; j < 5; j++)
+							{
+								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
+								if (i == 2 && j == 2) ir.setFill(Color.BLACK);
+								else ir.setFill(Color.LIGHTSKYBLUE);
+								inner.add(ir, j, i);
+							}
+					gridpane.add(inner, x, y);
+				}
+			}
+		Scene scene = new Scene(gridpane, xCount * cellSize, yCount * cellSize);
+		stage.setScene(scene);
+		stage.setTitle("A* algorithm found the shortest path for " + input[0] + ", consisting of " + finalPathLength + " steps...");
+		stage.show();
+	}
+
+	public void process() throws FileNotFoundException, IOException
 	{
 		String fileName;
-		goDiag = (args.length == 2);
-		if (args.length == 1 || args[1].equals("-d")) fileName = args[0];
-		else if (args[0].equals("-d")) fileName = args[1];
+		goDiag = (input.length == 2);
+		if (input.length == 1 || input[1].equals("-d")) fileName = input[0];
+		else if (input[0].equals("-d")) fileName = input[1];
 		else throw new IllegalArgumentException();
 
-		final long startTime = System.currentTimeMillis();
 
 		// Process file into a 2-dimensional array. Goal recorded, and start point added as first frontier.
 		BufferedReader reader = new BufferedReader(new FileReader(fileName));
@@ -48,20 +108,24 @@ class AStar
 			}
 		}
 
+		long startTime = System.currentTimeMillis();
+
 		// Find the shortest path to the goal. If the immediate top candidate in frontier does not reach the goal, 
 		// then it adds subsequent states to the frontier to be processed.
 		StateNode result;
 		for (result = frontier.poll(); result != null; result = frontier.poll())
 			if (result.reachedGoal()) break;
+
+		long endTime = System.currentTimeMillis();
 		
 		// Draw the path on the map, and output the result.
 		result.prev.showOnMap();
 		for (char[] row : map)
 			System.out.println(new String(row));
 		System.out.println("Shortest path took " + result.cost + " steps");
+		finalPathLength = result.cost;
 
-		final long endTime = System.currentTimeMillis();
-		System.out.println("Program took " + (endTime - startTime) + " milliseconds to run.");
+		System.out.println("Program took " + (endTime - startTime) + " milliseconds to find the shortest path.");
 	}
 
 	/**
