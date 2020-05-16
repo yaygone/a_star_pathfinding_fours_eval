@@ -27,10 +27,10 @@ class Fours
 			else 
 			{
 				System.out.println("Shortest solutions:");
-				for (StateNode node : results) System.out.println(node.expression);
+				for (StateNode node : results) System.out.println(node.expression + " = " + node.parseExpression(node.expression));
 			}
 		}
-		catch (Exception e) { System.err.println("Usage: java Fours <target value> <expression depth>"); }
+		catch (Exception e) { System.err.println("Usage: java Fours <target value> <expression depth>"); e.printStackTrace(); }
 	}
 
 	class StateNode
@@ -62,7 +62,7 @@ class Fours
 			queue.add(new StateNode(expression + "-4", true, depth));
 			queue.add(new StateNode(expression + "*4", true, depth));
 			queue.add(new StateNode(expression + "/4", true, depth));
-			queue.add(new StateNode(expression + "**4", true, depth));
+			queue.add(new StateNode(expression + "^4", true, depth));
 
 			// avoid expressions such as "4.44.4", "(4)4" and "((4))"
 			if (addDecimal) queue.add(new StateNode(expression + ".4", false, depth));
@@ -76,7 +76,57 @@ class Fours
 		public boolean matchesTarget()
 		{
 			// TODO Implement parser
-			return false;
+			return parseExpression(expression) == target;
+		}
+
+		/**
+		 * 	E -> T
+			  -> T+E
+			  -> T-E
+			T -> F
+			  -> F*T
+			  -> F/T
+			W -> numVal
+			  -> numVal^E
+			  -> (E)
+		 * @param expression
+		 * @return
+		 */
+
+		private double parseExpression(String expr)
+		{
+			int i = 0;
+			for (; i < expr.length(); i++)
+				if (expr.charAt(i) == '+' || expr.charAt(i) == '-')
+					break;
+			return (i == expr.length()) ? parseTerm(expr)
+				                        : (expr.charAt(i) == '+') ? parseTerm(expr.substring(0, i)) + parseTerm(expr.substring(i + 1, expr.length()))
+										                          : parseTerm(expr.substring(0, i)) + parseTerm(expr.substring(i + 1, expr.length()));
+		}
+
+		private double parseTerm(String term)
+		{
+			int i = 0;
+			for (; i < term.length(); i++)
+				if (term.charAt(i) == '*' || term.charAt(i) == '/')
+					break;
+			return (i == term.length()) ? parseFactor(term)
+				                        : (term.charAt(i) == '*') ? parseFactor(term.substring(0, i)) * parseTerm(term.substring(i + 1, term.length()))
+										                          : parseFactor(term.substring(0, i)) / parseTerm(term.substring(i + 1, term.length()));
+		}
+
+		private double parseFactor(String factor)
+		{
+			if (factor.charAt(0) == '(')
+				return (factor.charAt(factor.length() - 1) == ')') ? parseExpression(factor.substring(1, factor.length())) : Double.NaN;
+
+			int i = 0;
+			for (; i < factor.length(); i++)
+				if (factor.charAt(i) == '^')
+					break;
+			return (i == factor.length()) ? Double.parseDouble(factor)
+			                              : Math.pow(Double.parseDouble(factor.substring(0, i)), parseExpression(factor.substring(i + 1, factor.length())));
+
 		}
 	}
 }

@@ -7,13 +7,29 @@ class AStar
 	StateNode goal;
 	char[][] map;
 	StateNode[][] bestPath;
+	boolean goDiag;
 
 	public static void main(String[] args)
-	{ try { if (args.length == 1) new AStar().run(args[0]); } catch (Exception e) { e.printStackTrace(); } }
-
-	public void run(String fileName) throws FileNotFoundException, IOException
 	{
+		try 
+			{ if (args.length == 1 || args.length == 2) new AStar().run(args); }
+		catch (Exception e)
+		{
+			System.err.println("Usage: java AStar <map file name> <optional: diagonal flag>");
+			e.printStackTrace();
+		}
+	}
+
+	public void run(String[] args) throws FileNotFoundException, IOException
+	{
+		String fileName;
+		goDiag = (args.length == 2);
+		if (args.length == 1 || args[1].equals("-d")) fileName = args[0];
+		else if (args[0].equals("-d")) fileName = args[1];
+		else throw new IllegalArgumentException();
+
 		final long startTime = System.currentTimeMillis();
+
 		// Process file into a 2-dimensional array. Goal recorded, and start point added as first frontier.
 		BufferedReader reader = new BufferedReader(new FileReader(fileName));
 		List<String> input = new ArrayList<String>();
@@ -45,7 +61,6 @@ class AStar
 		System.out.println("Shortest path took " + result.cost + " steps");
 
 		final long endTime = System.currentTimeMillis();
-
 		System.out.println("Program took " + (endTime - startTime) + " milliseconds to run.");
 	}
 
@@ -55,10 +70,10 @@ class AStar
 	class StateNode
 	{
 		StateNode prev;
-		int cost;
+		double cost;
 		int x, y;
 
-		public StateNode(StateNode prev, int cost, int x, int y)
+		public StateNode(StateNode prev, double cost, int x, int y)
 		{
 			this.prev = prev;
 			this.cost = cost;
@@ -88,8 +103,22 @@ class AStar
 			if (prev != null) prev.showOnMap();
 		}
 
-		public StateNode[] getAdjacent()
-		{ return new StateNode[] { new StateNode(this, this.cost + 1, x - 1, y), new StateNode(this, this.cost + 1, x, y - 1), new StateNode(this, this.cost + 1, x + 1, y), new StateNode(this, this.cost + 1, x, y + 1) }; }
+		public List<StateNode> getAdjacent()
+		{
+			List<StateNode> returnList = new ArrayList<StateNode>();
+			returnList.add(new StateNode(this, this.cost + 1, x - 1, y));
+			returnList.add(new StateNode(this, this.cost + 1, x, y - 1));
+			returnList.add(new StateNode(this, this.cost + 1, x + 1, y));
+			returnList.add(new StateNode(this, this.cost + 1, x, y + 1));
+			if (goDiag)
+			{
+				returnList.add(new StateNode(this, this.cost + Math.sqrt(2), x + 1, y + 1));
+				returnList.add(new StateNode(this, this.cost + Math.sqrt(2), x + 1, y - 1));
+				returnList.add(new StateNode(this, this.cost + Math.sqrt(2), x - 1, y + 1));
+				returnList.add(new StateNode(this, this.cost + Math.sqrt(2), x - 1, y - 1));
+			}
+			return returnList;
+		}
 
 		private boolean isLooping()
 		{
@@ -99,9 +128,9 @@ class AStar
 		}
 
 		private int fval()
-		{ return cost + distanceTo(goal); }
+		{ return (int)((cost + distanceTo(goal)) * 100); }
 
-		public int distanceTo(StateNode other)
-		{ return Math.abs(this.x - other.x) + Math.abs(this.y - other.y); }
+		public double distanceTo(StateNode other)
+		{ return Math.sqrt(Math.pow(this.x - other.x, 2) + Math.pow(this.y - other.y, 2)); }
 	}
 }
