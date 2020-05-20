@@ -28,7 +28,7 @@ class Fours
 			else 
 			{
 				System.out.println("Shortest solutions:");
-				for (StateNode node : results) System.out.println(node.expression + " = " + node.eval(node.expression));
+				for (StateNode node : results) System.out.println(node.expression + " = " + node.eval());
 			}
 		}
 		catch (Exception e) { System.err.println("Usage: java Fours <target value> <expression depth>"); e.printStackTrace(); }
@@ -62,26 +62,26 @@ class Fours
 				
 			//next set of states added to queue with incremented depth
 			queue.add(new StateNode(expression + "+4", true, ++depth));
-			queue.add(new StateNode(expression + "-4", true, ++depth));
-			queue.add(new StateNode(expression + "*4", true, ++depth));
-			queue.add(new StateNode(expression + "/4", true, ++depth));
-			queue.add(new StateNode(expression + "^4", true, ++depth));
+			queue.add(new StateNode(expression + "-4", true, depth));
+			queue.add(new StateNode(expression + "*4", true, depth));
+			queue.add(new StateNode(expression + "/4", true, depth));
+			queue.add(new StateNode(expression + "^4", true, depth));
 
 			// avoid expressions such as "4.44.4", "(4)4" and "((4))"
 			if (addDecimal) queue.add(new StateNode(expression + ".4", false, depth));
 			if(expression.charAt(expression.length() - 1) != ')')
 			{
-				queue.add(new StateNode(expression + "4", addDecimal, ++depth));
-				queue.add(new StateNode("("+ expression + ")", false, ++depth));
+				queue.add(new StateNode(expression + "4", addDecimal, depth));
+				queue.add(new StateNode("("+ expression + ")", false, depth));
 			} 
 		}
 
 		public boolean matchesTarget() throws ScriptException
 		{
-			Double evaluatedValue = eval(expression);
+			Double evaluatedValue = eval();
 			System.out.println("Expression found " + evaluatedValue);
 			//System.out.println(evaluatedValue == target);
-			return evaluatedValue == target; 
+			return evaluatedValue == target;
 		}
 
 		/**
@@ -98,79 +98,77 @@ class Fours
 		 * @return
 		 * 
 		 */
-		public double eval(final String str) {
-			return new Object() {
-				int pos = -1, ch;
+		public double eval()
+		{
+			return new Object()
+			{
+				int position = -1, currChar;
 		
-				void nextChar() {
-					ch = (++pos < str.length()) ? str.charAt(pos) : -1;
-				}
-				boolean eat(int charToEat) {
-					while (ch == ' ') nextChar();
-					if (ch == charToEat) {
-						nextChar();
-						return true;
-					}
-					return false;
+				void nextChar()
+				{ currChar = (++position < expression.length()) ? expression.charAt(position) : -1; }
+
+				boolean checkFor(int matchChar)
+				{
+					if (currChar != matchChar) return false;
+					nextChar();
+					return true;
 				}		
-				double parse() {
+				double parse()
+				{
 					nextChar();
 					double x = parseExpression();
-					if (pos < str.length()) throw new RuntimeException("Unexpected: " + (char)ch);
+					if (position < expression.length()) throw new RuntimeException("Unexpected: " + (char)currChar);
 					return x;
 				}
 		
-				// Grammar:
-				// expression = term | expression `+` term | expression `-` term
-				// term = factor | term `*` factor | term `/` factor
-				// factor = `+` factor | `-` factor | `(` expression `)`
-				//        | number | functionName factor | factor `^` factor
-		
-				double parseExpression() {
-					double expression = parseTerm();
-					for (;;) {
-						if      (eat('+')) expression += parseTerm(); // addition
-						else if (eat('-')) expression -= parseTerm(); // subtraction
-						else return expression;
+				double parseExpression()
+				{
+					double expr = parseTerm();
+					while (true)
+					{
+						if (checkFor('+')) expr += parseTerm();
+						else if (checkFor('-')) expr -= parseTerm();
+						else return expr;
 					}
 				}
 		
-				double parseTerm() {
-					double term = parseFactor();
-					for (;;) {
-						if      (eat('*')) term *= parseFactor(); // multiplication
-						else if (eat('/')) term /= parseFactor(); // division
+				double parseTerm()
+				{
+					double term = parseWord();
+					while (true)
+					{
+						if (checkFor('*')) term *= parseWord();
+						else if (checkFor('/')) term /= parseWord();
 						else return term;
 					}
 				}
-		
-				double parseFactor() {
-					if (eat('+')) return parseFactor(); // unary plus
-					if (eat('-')) return -parseFactor(); // unary minus
-		
-					double factor;
-					int startPos = this.pos;
-					if (eat('(')) { // parentheses
-						factor = parseExpression();
-						eat(')');
-					} else if ((ch >= '0' && ch <= '9') || ch == '.') { // numbers
-						while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
-						factor = Double.parseDouble(str.substring(startPos, this.pos));
-					} else if (ch >= 'a' && ch <= 'z') { // functions
-						while (ch >= 'a' && ch <= 'z') nextChar();
-						String func = str.substring(startPos, this.pos);
-						factor = parseFactor();
-						if (func.equals("sqrt")) factor = Math.sqrt(factor);
-						else if (func.equals("sin")) factor = Math.sin(Math.toRadians(factor));
-						else if (func.equals("cos")) factor = Math.cos(Math.toRadians(factor));
-						else if (func.equals("tan")) factor = Math.tan(Math.toRadians(factor));
-						else throw new RuntimeException("Unknown function: " + func);
-					} else {
-						throw new RuntimeException("Unexpected: " + (char)ch);
+
+				double parseWord()
+				{
+					double word = parseFactor();
+					while (true)
+					{
+						if (checkFor('^')) word = Math.pow(word, parseFactor());
+						else return word;
 					}
+				}
 		
-					if (eat('^')) factor = Math.pow(factor, parseFactor()); // exponentiation
-		
+				double parseFactor()
+				{
+					double factor = 0;
+					int startPos = position;
+					if (checkFor('('))
+					{
+						factor = parseExpression();
+						checkFor(')');
+					}
+					else
+						while (currChar == '4' || currChar == '.')
+						{
+							nextChar();
+							factor = Double.parseDouble(expression.substring(startPos, position));
+						}
+
 					return factor;
 				}
 			}.parse();

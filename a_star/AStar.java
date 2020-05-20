@@ -43,43 +43,41 @@ public class AStar extends Application
 				else rect.setFill(Color.DIMGRAY);
 				gridpane.add(rect, x, y);
 				
+				GridPane inner = new GridPane();
 				if (map[y][x] == '.')
 				{
-					GridPane inner = new GridPane();
-						for (int i = 0; i < 5; i++)
-							for (int j = 0; j < 5; j++)
-							{
-								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
-								if (i == 2 && j == 2) ir.setFill(Color.BLACK);
-								else ir.setFill(Color.LIGHTSKYBLUE);
-								inner.add(ir, j, i);
-							}
+					for (int i = 0; i < 5; i++)
+						for (int j = 0; j < 5; j++)
+						{
+							Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
+							if (i == 2 && j == 2) ir.setFill(Color.BLACK);
+							else ir.setFill(Color.LIGHTSKYBLUE);
+							inner.add(ir, j, i);
+						}
 					gridpane.add(inner, x, y);
 				}
 				else if (map[y][x] == 'S')
 				{
-					GridPane inner = new GridPane();
-						for (int i = 0; i < 5; i++)
-							for (int j = 0; j < 5; j++)
-							{
-								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
-								if ((i == 0 && j == 2) || (i == 0 && j == 3) || (i == 1 && j == 1) || (i == 2 && j == 2) || (i == 3 && j == 3) || (i == 4 && j == 1) || (i == 4 && j == 2)) ir.setFill(Color.BLACK);
-								else ir.setFill(Color.LIMEGREEN);
-								inner.add(ir, j, i);
-							}
+					for (int i = 0; i < 5; i++)
+						for (int j = 0; j < 5; j++)
+						{
+							Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
+							if ((i == 0 && j == 2) || (i == 0 && j == 3) || (i == 1 && j == 1) || (i == 2 && j == 2) || (i == 3 && j == 3) || (i == 4 && j == 1) || (i == 4 && j == 2)) ir.setFill(Color.BLACK);
+							else ir.setFill(Color.LIMEGREEN);
+							inner.add(ir, j, i);
+						}
 					gridpane.add(inner, x, y);
 				}
 				else if (map[y][x] == 'G')
 				{
-					GridPane inner = new GridPane();
-						for (int i = 0; i < 5; i++)
-							for (int j = 0; j < 5; j++)
-							{
-								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
-								if ((i == 0 && j == 2) || (i == 0 && j == 3) || (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 2 && j == 3) || (i == 3 && j == 1) || (i == 3 && j == 3) || (i == 4 && j == 2) || (i == 4 && j == 3)) ir.setFill(Color.BLACK);
-								else ir.setFill(Color.FUCHSIA);
-								inner.add(ir, j, i);
-							}
+					for (int i = 0; i < 5; i++)
+						for (int j = 0; j < 5; j++)
+						{
+							Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
+							if ((i == 0 && j == 2) || (i == 0 && j == 3) || (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 2 && j == 3) || (i == 3 && j == 1) || (i == 3 && j == 3) || (i == 4 && j == 2) || (i == 4 && j == 3)) ir.setFill(Color.BLACK);
+							else ir.setFill(Color.FUCHSIA);
+							inner.add(ir, j, i);
+						}
 					gridpane.add(inner, x, y);
 				}
 			}
