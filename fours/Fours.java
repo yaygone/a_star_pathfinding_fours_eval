@@ -135,7 +135,6 @@ class Fours
 				void nextChar() {
 					ch = (++pos < str.length()) ? str.charAt(pos) : -1;
 				}
-		
 				boolean eat(int charToEat) {
 					while (ch == ' ') nextChar();
 					if (ch == charToEat) {
@@ -143,8 +142,7 @@ class Fours
 						return true;
 					}
 					return false;
-				}
-		
+				}		
 				double parse() {
 					nextChar();
 					double x = parseExpression();
@@ -159,20 +157,20 @@ class Fours
 				//        | number | functionName factor | factor `^` factor
 		
 				double parseExpression() {
-					double x = parseTerm();
+					double expression = parseTerm();
 					for (;;) {
-						if      (eat('+')) x += parseTerm(); // addition
-						else if (eat('-')) x -= parseTerm(); // subtraction
-						else return x;
+						if      (eat('+')) expression += parseTerm(); // addition
+						else if (eat('-')) expression -= parseTerm(); // subtraction
+						else return expression;
 					}
 				}
 		
 				double parseTerm() {
-					double x = parseFactor();
+					double term = parseFactor();
 					for (;;) {
-						if      (eat('*')) x *= parseFactor(); // multiplication
-						else if (eat('/')) x /= parseFactor(); // division
-						else return x;
+						if      (eat('*')) term *= parseFactor(); // multiplication
+						else if (eat('/')) term /= parseFactor(); // division
+						else return term;
 					}
 				}
 		
@@ -180,30 +178,30 @@ class Fours
 					if (eat('+')) return parseFactor(); // unary plus
 					if (eat('-')) return -parseFactor(); // unary minus
 		
-					double x;
+					double factor;
 					int startPos = this.pos;
 					if (eat('(')) { // parentheses
-						x = parseExpression();
+						factor = parseExpression();
 						eat(')');
 					} else if ((ch >= '0' && ch <= '9') || ch == '.') { // numbers
 						while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
-						x = Double.parseDouble(str.substring(startPos, this.pos));
+						factor = Double.parseDouble(str.substring(startPos, this.pos));
 					} else if (ch >= 'a' && ch <= 'z') { // functions
 						while (ch >= 'a' && ch <= 'z') nextChar();
 						String func = str.substring(startPos, this.pos);
-						x = parseFactor();
-						if (func.equals("sqrt")) x = Math.sqrt(x);
-						else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
-						else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
-						else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
+						factor = parseFactor();
+						if (func.equals("sqrt")) factor = Math.sqrt(factor);
+						else if (func.equals("sin")) factor = Math.sin(Math.toRadians(factor));
+						else if (func.equals("cos")) factor = Math.cos(Math.toRadians(factor));
+						else if (func.equals("tan")) factor = Math.tan(Math.toRadians(factor));
 						else throw new RuntimeException("Unknown function: " + func);
 					} else {
 						throw new RuntimeException("Unexpected: " + (char)ch);
 					}
 		
-					if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation
+					if (eat('^')) factor = Math.pow(factor, parseFactor()); // exponentiation
 		
-					return x;
+					return factor;
 				}
 			}.parse();
 		} 
