@@ -29,8 +29,7 @@ public class AStar extends Application
 	@Override
 	public void start(Stage stage)
 	{
-		try { if (input.length == 1 || input.length == 2) process(); }
-		catch (Exception e) { e.printStackTrace(); }
+		try { process(); } catch (Exception e) { e.printStackTrace(); }
 		int xCount = map[0].length;
 		int yCount = map.length;
 		System.out.println();
@@ -39,22 +38,11 @@ public class AStar extends Application
 			for (int x = 0; x < xCount; x++)
 			{
 				Rectangle rect = new Rectangle(cellSize, cellSize);
-				switch (map[y][x])
-				{
-					case 'X':
-						rect.setFill(Color.MAROON);
-						break;
-					case ' ':
-						rect.setFill(Color.LIGHTSKYBLUE);
-						break;
-					case 'G':
-						rect.setFill(Color.FUCHSIA);
-						break;
-					default:
-						rect.setFill(Color.DIMGRAY);
-						break;
-				}
+				if (map[y][x] == 'X') rect.setFill(Color.MAROON);
+				else if (map[y][x] == ' ') rect.setFill(Color.LIGHTSKYBLUE);
+				else rect.setFill(Color.DIMGRAY);
 				gridpane.add(rect, x, y);
+				
 				if (map[y][x] == '.')
 				{
 					GridPane inner = new GridPane();
