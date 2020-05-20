@@ -79,7 +79,7 @@ class Fours
 		public boolean matchesTarget() throws ScriptException
 		{
 			Double evaluatedValue = eval(expression);
-			//System.out.println("Expression found " + evaluatedValue);
+			System.out.println("Expression found " + evaluatedValue);
 			//System.out.println(evaluatedValue == target);
 			return evaluatedValue == target; 
 		}
