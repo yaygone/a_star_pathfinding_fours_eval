@@ -31,7 +31,7 @@ class Fours
 			else 
 			{
 				System.out.println("Shortest solutions:");
-				for (StateNode node : results) System.out.println(node.expression + " = " + node.parseExpression(node.expression));
+				for (StateNode node : results) System.out.println(node.expression + " = " + node.parseExpression());
 			}
 		}
 		catch (Exception e) { System.err.println("Usage: java Fours <target value> <expression depth>"); e.printStackTrace(); }
@@ -54,7 +54,7 @@ class Fours
 		public void run() throws ScriptException
 		{
 			System.out.println("currently tested expression " + expression);
-			if (this.matchesTarget())
+			if (this.parseExpression() == target)
 			{
 				System.out.println("matched target found");
 				results.add(this);
@@ -62,13 +62,13 @@ class Fours
 				// other solutions of equal length as this, and not any longer solutions.
 				maxDepth = depth;
 			}
-				
+			
 			//next set of states added to queue with incremented depth
 			queue.add(new StateNode(expression + "+4", true, ++depth));
-			queue.add(new StateNode(expression + "-4", true, ++depth));
-			queue.add(new StateNode(expression + "*4", true, ++depth));
-			queue.add(new StateNode(expression + "/4", true, ++depth));
-			queue.add(new StateNode(expression + "^4", true, ++depth));
+			queue.add(new StateNode(expression + "-4", true, depth));
+			queue.add(new StateNode(expression + "*4", true, depth));
+			queue.add(new StateNode(expression + "/4", true, depth));
+			queue.add(new StateNode(expression + "^4", true, depth));
 
 			// avoid expressions such as "4.44.4", "(4)4" and "((4))"
 			if (addDecimal) queue.add(new StateNode(expression + ".4", false, depth));
@@ -79,39 +79,14 @@ class Fours
 			} 
 		}
 
-		public boolean matchesTarget() throws ScriptException
+		public double parseExpression() throws ScriptException
 		{
-			Double evaluatedValue = parseExpression(expression);
-			//System.out.println("Expression found " + evaluatedValue);
-			//System.out.println(evaluatedValue == target);
-			return evaluatedValue == target;
+			ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
+			String output = engine.eval(expression).toString();
+			System.out.println(output);
+			return Double.parseDouble(output);
 			
 		}
-
-		/**
-		 * 	E -> T
-			  -> T+E
-			  -> T-E
-			T -> F
-			  -> F*T
-			  -> F/T
-			W -> numVal
-			  -> numVal^E
-			  -> (E)
-		 * @param expression
-		 * @return
-		 */
-
-		private double parseExpression(String expr) throws ScriptException
-		{
-			ScriptEngineManager mgr = new ScriptEngineManager();
-			ScriptEngine engine = mgr.getEngineByName("JavaScript");
-			System.out.println(engine.eval(expr));
-			String something = engine.eval(expr).toString();
-			double expressionValue = Double.parseDouble(something);
-			return expressionValue;
-		} 
-		
 	}
 	//###################END of INNER CLASS 
 }//################END of FOURS CLASS
