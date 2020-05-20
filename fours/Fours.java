@@ -85,10 +85,6 @@ class Fours
 			//System.out.println("Expression found " + evaluatedValue);
 			//System.out.println(evaluatedValue == target);
 			return evaluatedValue == target; 
-
-			/* double evalutatedValue = eval(expression);
-			System.out.println("Expression found " + Double.toString(evalutatedValue));
-			return evalutatedValue == target; */
 		}
 
 		/**
@@ -105,29 +101,6 @@ class Fours
 		 * @return
 		 * 
 		 */
- 		/* private double parseExpression(String expr) throws ScriptException
-		{
-			ScriptEngineManager mgr = new ScriptEngineManager();
-			ScriptEngine engine = mgr.getEngineByName("JavaScript");
-			String [] pieces;
-			if (expr.contains("^"))
-			{
-				pieces = expr.split("^");
-
-				double expressionValue = Math.pow(Double.parseDouble(engine.eval(pieces[0]).toString()), Double.parseDouble(engine.eval(pieces[1]).toString()));
-				for(int i = 2; i < pieces.length; i++)
-				{
-					expressionValue = Math.pow(expressionValue, Double.parseDouble(engine.eval(pieces[i]).toString()));
-				}
-				return expressionValue;
-			}
-			System.out.println(engine.eval(expr));
-			String something = engine.eval(expr).toString();
-			double expressionValue = Double.parseDouble(something);
-			return expressionValue;
-		}  */
-
-
 		public double eval(final String str) {
 			return new Object() {
 				int pos = -1, ch;
