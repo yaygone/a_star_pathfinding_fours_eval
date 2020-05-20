@@ -29,8 +29,7 @@ public class AStar extends Application
 	@Override
 	public void start(Stage stage)
 	{
-		try { if (input.length == 1 || input.length == 2) process(); }
-		catch (Exception e) { e.printStackTrace(); }
+		try { process(); } catch (Exception e) { e.printStackTrace(); }
 		int xCount = map[0].length;
 		int yCount = map.length;
 		System.out.println();
@@ -39,28 +38,11 @@ public class AStar extends Application
 			for (int x = 0; x < xCount; x++)
 			{
 				Rectangle rect = new Rectangle(cellSize, cellSize);
-				switch (map[y][x])
-				{
-					case 'X':
-						rect.setFill(Color.MAROON);
-						break;
-					case ' ':
-						rect.setFill(Color.LIGHTSKYBLUE);
-						break;
-					case 'S':
-						rect.setFill(Color.LIMEGREEN);
-						break;
-					case '.':
-						rect.setFill(Color.BLACK);
-						break;
-					case 'G':
-						rect.setFill(Color.FUCHSIA);
-						break;
-					default:
-						rect.setFill(Color.DIMGRAY);
-						break;
-				}
+				if (map[y][x] == 'X') rect.setFill(Color.MAROON);
+				else if (map[y][x] == ' ') rect.setFill(Color.LIGHTSKYBLUE);
+				else rect.setFill(Color.DIMGRAY);
 				gridpane.add(rect, x, y);
+				
 				if (map[y][x] == '.')
 				{
 					GridPane inner = new GridPane();
@@ -70,6 +52,32 @@ public class AStar extends Application
 								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
 								if (i == 2 && j == 2) ir.setFill(Color.BLACK);
 								else ir.setFill(Color.LIGHTSKYBLUE);
+								inner.add(ir, j, i);
+							}
+					gridpane.add(inner, x, y);
+				}
+				else if (map[y][x] == 'S')
+				{
+					GridPane inner = new GridPane();
+						for (int i = 0; i < 5; i++)
+							for (int j = 0; j < 5; j++)
+							{
+								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
+								if ((i == 0 && j == 2) || (i == 0 && j == 3) || (i == 1 && j == 1) || (i == 2 && j == 2) || (i == 3 && j == 3) || (i == 4 && j == 1) || (i == 4 && j == 2)) ir.setFill(Color.BLACK);
+								else ir.setFill(Color.LIMEGREEN);
+								inner.add(ir, j, i);
+							}
+					gridpane.add(inner, x, y);
+				}
+				else if (map[y][x] == 'G')
+				{
+					GridPane inner = new GridPane();
+						for (int i = 0; i < 5; i++)
+							for (int j = 0; j < 5; j++)
+							{
+								Rectangle ir = new Rectangle(cellSize / 5, cellSize / 5);
+								if ((i == 0 && j == 2) || (i == 0 && j == 3) || (i == 1 && j == 1) || (i == 2 && j == 1) || (i == 2 && j == 3) || (i == 3 && j == 1) || (i == 3 && j == 3) || (i == 4 && j == 2) || (i == 4 && j == 3)) ir.setFill(Color.BLACK);
+								else ir.setFill(Color.FUCHSIA);
 								inner.add(ir, j, i);
 							}
 					gridpane.add(inner, x, y);
