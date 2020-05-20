@@ -1,11 +1,11 @@
 import java.util.*;
+import java.io.*;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 class Fours
 {
-
 	static List<StateNode> results = new ArrayList<StateNode>();
 	static double target;
 	static int maxDepth;
@@ -31,7 +31,7 @@ class Fours
 			else 
 			{
 				System.out.println("Shortest solutions:");
-				for (StateNode node : results) System.out.println(node.expression + " = " + node.parseExpression(node.expression));
+				for (StateNode node : results) System.out.println(node.expression + " = " + node.eval(node.expression));
 			}
 		}
 		catch (Exception e) { System.err.println("Usage: java Fours <target value> <expression depth>"); e.printStackTrace(); }
@@ -74,18 +74,21 @@ class Fours
 			if (addDecimal) queue.add(new StateNode(expression + ".4", false, depth));
 			if(expression.charAt(expression.length() - 1) != ')')
 			{
-				queue.add(new StateNode(expression + "4", addDecimal, depth));
-				queue.add(new StateNode("("+ expression + ")", false, depth));
+				queue.add(new StateNode(expression + "4", addDecimal, ++depth));
+				queue.add(new StateNode("("+ expression + ")", false, ++depth));
 			} 
 		}
 
 		public boolean matchesTarget() throws ScriptException
 		{
-			Double evaluatedValue = parseExpression(expression);
+			Double evaluatedValue = eval(expression);
 			//System.out.println("Expression found " + evaluatedValue);
 			//System.out.println(evaluatedValue == target);
-			return evaluatedValue == target;
-			
+			return evaluatedValue == target; 
+
+			/* double evalutatedValue = eval(expression);
+			System.out.println("Expression found " + Double.toString(evalutatedValue));
+			return evalutatedValue == target; */
 		}
 
 		/**
@@ -100,16 +103,109 @@ class Fours
 			  -> (E)
 		 * @param expression
 		 * @return
+		 * 
 		 */
-
-		private double parseExpression(String expr) throws ScriptException
+ 		/* private double parseExpression(String expr) throws ScriptException
 		{
 			ScriptEngineManager mgr = new ScriptEngineManager();
 			ScriptEngine engine = mgr.getEngineByName("JavaScript");
+			String [] pieces;
+			if (expr.contains("^"))
+			{
+				pieces = expr.split("^");
+
+				double expressionValue = Math.pow(Double.parseDouble(engine.eval(pieces[0]).toString()), Double.parseDouble(engine.eval(pieces[1]).toString()));
+				for(int i = 2; i < pieces.length; i++)
+				{
+					expressionValue = Math.pow(expressionValue, Double.parseDouble(engine.eval(pieces[i]).toString()));
+				}
+				return expressionValue;
+			}
 			System.out.println(engine.eval(expr));
 			String something = engine.eval(expr).toString();
 			double expressionValue = Double.parseDouble(something);
 			return expressionValue;
+		}  */
+
+
+		public double eval(final String str) {
+			return new Object() {
+				int pos = -1, ch;
+		
+				void nextChar() {
+					ch = (++pos < str.length()) ? str.charAt(pos) : -1;
+				}
+		
+				boolean eat(int charToEat) {
+					while (ch == ' ') nextChar();
+					if (ch == charToEat) {
+						nextChar();
+						return true;
+					}
+					return false;
+				}
+		
+				double parse() {
+					nextChar();
+					double x = parseExpression();
+					if (pos < str.length()) throw new RuntimeException("Unexpected: " + (char)ch);
+					return x;
+				}
+		
+				// Grammar:
+				// expression = term | expression `+` term | expression `-` term
+				// term = factor | term `*` factor | term `/` factor
+				// factor = `+` factor | `-` factor | `(` expression `)`
+				//        | number | functionName factor | factor `^` factor
+		
+				double parseExpression() {
+					double x = parseTerm();
+					for (;;) {
+						if      (eat('+')) x += parseTerm(); // addition
+						else if (eat('-')) x -= parseTerm(); // subtraction
+						else return x;
+					}
+				}
+		
+				double parseTerm() {
+					double x = parseFactor();
+					for (;;) {
+						if      (eat('*')) x *= parseFactor(); // multiplication
+						else if (eat('/')) x /= parseFactor(); // division
+						else return x;
+					}
+				}
+		
+				double parseFactor() {
+					if (eat('+')) return parseFactor(); // unary plus
+					if (eat('-')) return -parseFactor(); // unary minus
+		
+					double x;
+					int startPos = this.pos;
+					if (eat('(')) { // parentheses
+						x = parseExpression();
+						eat(')');
+					} else if ((ch >= '0' && ch <= '9') || ch == '.') { // numbers
+						while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
+						x = Double.parseDouble(str.substring(startPos, this.pos));
+					} else if (ch >= 'a' && ch <= 'z') { // functions
+						while (ch >= 'a' && ch <= 'z') nextChar();
+						String func = str.substring(startPos, this.pos);
+						x = parseFactor();
+						if (func.equals("sqrt")) x = Math.sqrt(x);
+						else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
+						else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
+						else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
+						else throw new RuntimeException("Unknown function: " + func);
+					} else {
+						throw new RuntimeException("Unexpected: " + (char)ch);
+					}
+		
+					if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation
+		
+					return x;
+				}
+			}.parse();
 		} 
 		
 	}
