@@ -1,7 +1,4 @@
 import java.util.*;
-import java.io.*;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
 class Fours
