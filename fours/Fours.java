@@ -1,5 +1,4 @@
 import java.util.*;
-import javax.script.ScriptException;
 
 class Fours
 {
@@ -16,7 +15,10 @@ class Fours
 		try
 		{
 			target = Double.parseDouble(args[0]);
-			maxDepth = Integer.parseInt(args[1]);
+			maxDepth = (args.length == 2) ? Integer.parseInt(args[1]) : Integer.MAX_VALUE;
+			if (args.length > 2) throw new IllegalArgumentException();
+
+			System.out.println("\nLooking for expressions matching " + args[0]);
 			queue.add(new StateNode("4", true, 0));
 			for (StateNode currNode = queue.remove(); currNode != null; currNode = queue.remove())
 			{
@@ -24,17 +26,17 @@ class Fours
 				currNode.run();
 			}
 			
-			if (results.isEmpty()) System.out.println("No solution found, try increasing depth.");
+			if (results.isEmpty()) System.out.println("No solution found, try increasing depth limit.");
 			else 
 			{
 				System.out.println("Shortest solutions:");
-				for (StateNode node : results) System.out.println(node.expression + " = " + node.eval());
+				for (StateNode node : results) System.out.println(node.expression + " = " + args[0]);
 			}
 		}
-		catch (Exception e) { System.err.println("Usage: java Fours <target value> <expression depth>"); e.printStackTrace(); }
+		catch (StackOverflowError e) { System.err.println("Run out of memory! Try again with a larger JVM heap allocation."); }
+		catch (Exception e) { System.err.println("Usage: java Fours <target value> <optional: state machine depth limit>"); }
 	}
-	//#################################################################################################################//
-	//Inner class starts here
+
 	class StateNode
 	{
 		String expression;
@@ -48,15 +50,11 @@ class Fours
 			depth = currDepth;
 		}
 
-		public void run() throws ScriptException
+		public void run()
 		{
-			System.out.println("currently tested expression " + expression);
-			if (this.matchesTarget())
+			if (this.evaluate() == target)
 			{
-				System.out.println("matched target found");
 				results.add(this);
-				// If this is a solution, the while loop above should only look for 
-				// other solutions of equal length as this, and not any longer solutions.
 				maxDepth = depth;
 			}
 				
@@ -66,7 +64,6 @@ class Fours
 			queue.add(new StateNode(expression + "*4", true, depth));
 			queue.add(new StateNode(expression + "/4", true, depth));
 			queue.add(new StateNode(expression + "^4", true, depth));
-
 			// avoid expressions such as "4.44.4", "(4)4" and "((4))"
 			if (addDecimal) queue.add(new StateNode(expression + ".4", false, depth));
 			if(expression.charAt(expression.length() - 1) != ')')
@@ -76,29 +73,7 @@ class Fours
 			} 
 		}
 
-		public boolean matchesTarget() throws ScriptException
-		{
-			Double evaluatedValue = eval();
-			System.out.println("Expression found " + evaluatedValue);
-			//System.out.println(evaluatedValue == target);
-			return evaluatedValue == target;
-		}
-
-		/**
-		 * 	E -> T
-			  -> T+E
-			  -> T-E
-			T -> F
-			  -> F*T
-			  -> F/T
-			W -> numVal
-			  -> numVal^E
-			  -> (E)
-		 * @param expression
-		 * @return
-		 * 
-		 */
-		public double eval()
+		public double evaluate()
 		{
 			return new Object()
 			{
@@ -112,7 +87,7 @@ class Fours
 					if (currChar != matchChar) return false;
 					nextChar();
 					return true;
-				}		
+				}
 				double parse()
 				{
 					nextChar();
@@ -162,18 +137,15 @@ class Fours
 						factor = parseExpression();
 						checkFor(')');
 					}
-					else
-						while (currChar == '4' || currChar == '.')
-						{
-							nextChar();
-							factor = Double.parseDouble(expression.substring(startPos, position));
-						}
+					else while (currChar == '4' || currChar == '.')
+					{
+						nextChar();
+						factor = Double.parseDouble(expression.substring(startPos, position));
+					}
 
 					return factor;
 				}
 			}.parse();
 		} 
-		
 	}
-	//###################END of INNER CLASS 
-}//################END of FOURS CLASS
+}
