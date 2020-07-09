@@ -1,7 +1,6 @@
-# COMPX301-20A Assignment 3
-Ye-Gon Ryoo, Erika Duerre
-
 ## Fours
+
+Generates and evaluates arithmetic expressions using the number four.
 
 ### Output for [1..100]
 
